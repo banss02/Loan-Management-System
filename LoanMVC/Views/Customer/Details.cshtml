@@ -1,0 +1,35 @@
+@model LoanMVC.Models.CustomerViewModel
+
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<h2>My Profile</h2>
+
+<dl class="row">
+    <dt class="col-sm-3">Customer Id</dt>
+    <dd class="col-sm-9">@Model.CustomerId</dd>
+
+    <dt class="col-sm-3">Full Name</dt>
+    <dd class="col-sm-9">@Model.FullName</dd>
+
+    <dt class="col-sm-3">Email</dt>
+    <dd class="col-sm-9">@Model.Email</dd>
+
+    <dt class="col-sm-3">Phone</dt>
+    <dd class="col-sm-9">@Model.Phone</dd>
+
+    <dt class="col-sm-3">Salary</dt>
+    <dd class="col-sm-9">@Model.Salary</dd>
+
+    <dt class="col-sm-3">CIBIL Score</dt>
+    <dd class="col-sm-9">@Model.CIBILScore</dd>
+
+    <dt class="col-sm-3">Employment Type</dt>
+    <dd class="col-sm-9">@Model.EmploymentType</dd>
+
+    <dt class="col-sm-3">Customer Since</dt>
+    <dd class="col-sm-9">@Model.CreatedDate.ToShortDateString()</dd>
+</dl>
+
+<a asp-action="Edit" class="btn btn-primary">Edit Profile</a>

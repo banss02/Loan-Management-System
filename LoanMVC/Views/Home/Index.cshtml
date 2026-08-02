@@ -1,0 +1,16 @@
+@{
+    ViewData["Title"] = "Home";
+}
+
+<h1>Welcome to LoanMVC</h1>
+<p>A simple loan management front-end for LoanAPI.</p>
+
+@if (Context.Session.GetString("Token") == null)
+{
+    <a asp-controller="Account" asp-action="Login" class="btn btn-primary">Login</a>
+    <a asp-controller="Customer" asp-action="Register" class="btn btn-outline-primary">Register</a>
+}
+else
+{
+    <a asp-controller="Loan" asp-action="Index" class="btn btn-primary">Go to Loans</a>
+}

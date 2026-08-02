@@ -1,0 +1,33 @@
+@model LoanMVC.Models.LoanViewModel
+
+@{
+    ViewData["Title"] = "Loan Details";
+}
+
+<h2>Loan Details</h2>
+
+<dl class="row">
+    <dt class="col-sm-3">Loan Id</dt>
+    <dd class="col-sm-9">@Model.LoanId</dd>
+
+    <dt class="col-sm-3">Loan Type</dt>
+    <dd class="col-sm-9">@Model.LoanType</dd>
+
+    <dt class="col-sm-3">Amount</dt>
+    <dd class="col-sm-9">@Model.LoanAmount</dd>
+
+    <dt class="col-sm-3">Tenure</dt>
+    <dd class="col-sm-9">@Model.TenureMonths months</dd>
+
+    <dt class="col-sm-3">Interest Rate</dt>
+    <dd class="col-sm-9">@Model.InterestRate %</dd>
+
+    <dt class="col-sm-3">Status</dt>
+    <dd class="col-sm-9">@Model.Status</dd>
+
+    <dt class="col-sm-3">Applied Date</dt>
+    <dd class="col-sm-9">@Model.AppliedDate.ToShortDateString()</dd>
+</dl>
+
+<a asp-controller="LoanSchedule" asp-action="Index" asp-route-loanId="@Model.LoanId" class="btn btn-warning">View EMI Schedule</a>
+<a asp-action="Index" class="btn btn-secondary">Back</a>

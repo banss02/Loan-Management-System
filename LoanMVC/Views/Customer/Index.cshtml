@@ -1,0 +1,33 @@
+@model List<LoanMVC.Models.CustomerViewModel>
+
+@{
+    ViewData["Title"] = "Customers";
+}
+
+<h2>All Customers</h2>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Id</th><th>Full Name</th><th>Email</th><th>Phone</th><th>CIBIL Score</th><th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var c in Model)
+        {
+            <tr>
+                <td>@c.CustomerId</td>
+                <td>@c.FullName</td>
+                <td>@c.Email</td>
+                <td>@c.Phone</td>
+                <td>@c.CIBILScore</td>
+                <td>
+                    <form asp-action="Delete" asp-route-id="@c.CustomerId" method="post"
+                          onsubmit="return confirm('Delete this customer? This cannot be undone.');" style="display:inline">
+                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

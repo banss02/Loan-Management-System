@@ -1,0 +1,61 @@
+@model List<LoanMVC.Models.LoanViewModel>
+
+@{
+    ViewData["Title"] = "Loans";
+    var role = Context.Session.GetString("Role");
+}
+
+<h2>@(role == "Admin" ? "All Loans" : "My Loans")</h2>
+
+@if (role != "Admin")
+{
+    <a asp-action="Apply" class="btn btn-success mb-3">Apply for Loan</a>
+}
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Loan Id</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Tenure (months)</th>
+            <th>Status</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var loan in Model)
+            {
+                <tr>
+                    <td>@loan.LoanId</td>
+                    <td>@loan.LoanType</td>
+                    <td>@loan.LoanAmount</td>
+                    <td>@loan.TenureMonths</td>
+                    <td>@loan.Status</td>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@loan.LoanId" class="btn btn-sm btn-info">View</a>
+                        <a asp-controller="LoanSchedule" asp-action="Index" asp-route-loanId="@loan.LoanId" class="btn btn-sm btn-warning">EMI Schedule</a>
+
+                        @if (role == "Admin")
+                        {
+                            <form asp-action="Approve" asp-route-id="@loan.LoanId" method="post" style="display:inline">
+                                <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                            </form>
+                            <form asp-action="Reject" asp-route-id="@loan.LoanId" method="post" style="display:inline">
+                                <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="6">No loans found.</td>
+            </tr>
+        }
+    </tbody>
+</table>

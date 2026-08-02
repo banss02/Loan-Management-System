@@ -1,0 +1,37 @@
+@model List<LoanMVC.Models.PaymentViewModel>
+
+@{
+    ViewData["Title"] = "Payments";
+    var role = Context.Session.GetString("Role");
+}
+
+<h2>@(role == "Admin" ? "All Payments" : "My Payments")</h2>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Payment Id</th>
+            <th>Loan Id</th>
+            <th>Amount</th>
+            <th>Payment Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td>@p.PaymentId</td>
+                    <td>@p.LoanId</td>
+                    <td>@p.Amount</td>
+                    <td>@p.PaymentDate.ToShortDateString()</td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr><td colspan="4">No payments found.</td></tr>
+        }
+    </tbody>
+</table>

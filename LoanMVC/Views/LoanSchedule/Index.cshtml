@@ -1,0 +1,62 @@
+@model List<LoanMVC.Models.LoanScheduleViewModel>
+
+@{
+    ViewData["Title"] = "EMI Schedule";
+    int loanId = ViewBag.LoanId;
+    var role = Context.Session.GetString("Role");
+}
+
+<h2>EMI Schedule for Loan #@loanId</h2>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Due Date</th>
+            <th>EMI Amount</th>
+            <th>Principal</th>
+            <th>Interest</th>
+            <th>Paid</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var s in Model)
+            {
+                <tr>
+                    <td>@s.InstallmentNo</td>
+                    <td>@s.DueDate.ToShortDateString()</td>
+                    <td>@s.EMIAmount</td>
+                    <td>@s.PrincipalAmount</td>
+                    <td>@s.InterestAmount</td>
+                    <td>@(s.IsPaid ? "Yes" : "No")</td>
+
+                    <td>
+                        @if (!s.IsPaid && role != "Admin")
+                        {
+                            <a asp-controller="Payment"
+                               asp-action="Create"
+                               asp-route-loanId="@loanId"
+                               asp-route-scheduleId="@s.ScheduleId"
+                               asp-route-amount="@s.EMIAmount"
+                               class="btn btn-sm btn-primary">
+                                Pay EMI
+                            </a>
+                        }
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="7">No schedule found.</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a asp-controller="Loan" asp-action="Index"
+   class="btn btn-secondary">Back to Loans</a>
