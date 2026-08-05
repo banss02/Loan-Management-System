@@ -1,6 +1,5 @@
 namespace LoanMVC.Models
 {
-    // Must match the JSON shape returned by LoanAPI's POST api/User/login
     public class LoginResultViewModel
     {
         public string Token { get; set; } = "";

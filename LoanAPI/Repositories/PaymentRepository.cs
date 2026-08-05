@@ -14,7 +14,7 @@ namespace LoanAPI.Repositories
         }
 
         public async Task<List<Payment>> GetAllPayments() =>
-            await _context.Payments.ToListAsync();
+            await _context.Payments.Include(p => p.Loan).ToListAsync();
 
         public async Task<List<Payment>> GetPaymentsByCustomerId(int customerId) =>
             await _context.Payments

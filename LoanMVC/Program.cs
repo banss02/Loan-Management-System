@@ -14,7 +14,7 @@ builder.Services.AddTransient<AuthHeaderHandler>();
 builder.Services.AddHttpClient<AccountService>(client =>
 {
     client.BaseAddress = new Uri(apiBaseUrl);
-});
+}).AddHttpMessageHandler<AuthHeaderHandler>();
 
 // Registration is public too, no token needed
 builder.Services.AddHttpClient<CustomerService>(client =>
@@ -60,8 +60,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
-app.UseSession(); // must come before UseAuthorization / before controllers run, so SessionAuth can read it
-
+app.UseSession(); 
 app.UseAuthorization();
 
 app.MapControllerRoute(

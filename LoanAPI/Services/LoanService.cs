@@ -48,8 +48,8 @@ namespace LoanAPI.Services
 
         public async Task<(bool Success, string Message)> ApplyLoan(ApplyLoanDto dto)
         {
-            if (dto.LoanAmount < 1000)
-                return (false, "Loan amount must be at least 1000.");
+            if (dto.LoanAmount < 10000)
+                return (false, "Loan amount must be at least 10000.");
 
             if (dto.TenureMonths < 1 || dto.TenureMonths > 360)
                 return (false, "Tenure must be between 1 and 360 months.");

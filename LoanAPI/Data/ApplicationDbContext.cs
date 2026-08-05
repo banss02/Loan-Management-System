@@ -51,7 +51,7 @@ namespace LoanAPI.Data
                 .HasOne(p => p.Loan)
                 .WithMany()
                 .HasForeignKey(p => p.LoanId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Payment>()
                 .HasOne(p => p.Schedule)

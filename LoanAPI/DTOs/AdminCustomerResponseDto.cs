@@ -1,13 +1,9 @@
-using System.ComponentModel.DataAnnotations;
-
-namespace LoanAPI.Models
+namespace LoanAPI.DTOs
 {
-    public class Customer
+    public class AdminCustomerResponseDto
     {
-        [Key]
         public int CustomerId { get; set; }
         public string FullName { get; set; } = "";
-        public DateTime DateOfBirth { get; set; }
         public string Email { get; set; } = "";
         public string Phone { get; set; } = "";
         public decimal Salary { get; set; }

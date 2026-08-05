@@ -1,4 +1,5 @@
 using LoanMVC.Models;
+using System.Text.Json;
 
 namespace LoanMVC.Services
 {
@@ -14,20 +15,25 @@ namespace LoanMVC.Services
         public async Task<(bool Success, string Message)> Register(RegisterCustomerViewModel model)
         {
             var response = await _httpClient.PostAsJsonAsync("api/Customer", model);
-            var isJson = response.Content.Headers.ContentType?.MediaType == "application/json";
+
+            RegisterCustomerResponseViewModel? result = null;
+            try
+            {
+                result = await response.Content.ReadFromJsonAsync<RegisterCustomerResponseViewModel>();
+            }
+            catch
+            {
+                // API might return a plain string error - ignore parse failure, fall back below
+            }
 
             if (!response.IsSuccessStatusCode)
             {
-                var errorMessage = isJson
-                    ? (await response.Content.ReadFromJsonAsync<RegisterCustomerResponseViewModel>())?.Message
-                    : await response.Content.ReadAsStringAsync();
+                var errorText = result?.Message;
+                if (string.IsNullOrEmpty(errorText))
+                    errorText = await response.Content.ReadAsStringAsync();
 
-                return (false, string.IsNullOrEmpty(errorMessage) ? "Registration failed." : errorMessage);
+                return (false, string.IsNullOrEmpty(errorText) ? "Registration failed." : errorText);
             }
-
-            var result = isJson
-                ? await response.Content.ReadFromJsonAsync<RegisterCustomerResponseViewModel>()
-                : null;
 
             return (true, result?.Message ?? "Customer registered successfully.");
         }
@@ -41,28 +47,37 @@ namespace LoanMVC.Services
             return await response.Content.ReadFromJsonAsync<CustomerViewModel>();
         }
 
-        public async Task<List<CustomerViewModel>> GetAllCustomers()
+        public async Task<List<AdminCustomerViewModel>> GetAllCustomers()
         {
             var response = await _httpClient.GetAsync("api/Customer");
             if (!response.IsSuccessStatusCode)
-                return new List<CustomerViewModel>();
+                return new List<AdminCustomerViewModel>();
 
-            return await response.Content.ReadFromJsonAsync<List<CustomerViewModel>>()
-                   ?? new List<CustomerViewModel>();
+            return await response.Content.ReadFromJsonAsync<List<AdminCustomerViewModel>>()
+                   ?? new List<AdminCustomerViewModel>();
         }
 
         public async Task<(bool Success, string Message)> UpdateCustomer(int id, UpdateCustomerViewModel model)
         {
-            var response = await _httpClient.PutAsJsonAsync($"api/Customer/{id}", model);
+           var response = await _httpClient.PutAsJsonAsync($"api/Customer/{id}", model);
 
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorText = await response.Content.ReadAsStringAsync();
-                return (false, string.IsNullOrEmpty(errorText) ? "Update failed." : errorText);
-            }
+           if (!response.IsSuccessStatusCode)
+           {
+           try
+           {
+            var error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
 
-            return (true, "Profile updated successfully.");
-        }
+            if (error != null && error.TryGetValue("message", out var message))
+                return (false, message);
+           }
+           catch
+           {
+            // Ignore parse errors
+           }
+           return (false, "Update failed.");
+          }
+        return (true, "Profile updated successfully.");
+       }
 
         public async Task<bool> DeleteCustomer(int id)
         {

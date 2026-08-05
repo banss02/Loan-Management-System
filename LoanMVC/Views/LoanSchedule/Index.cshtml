@@ -17,7 +17,10 @@
             <th>Principal</th>
             <th>Interest</th>
             <th>Paid</th>
-            <th>Action</th>
+            @if (role != "Admin")
+            {
+                <th>Action</th>
+            }
         </tr>
     </thead>
     <tbody>
@@ -33,19 +36,23 @@
                     <td>@s.InterestAmount</td>
                     <td>@(s.IsPaid ? "Yes" : "No")</td>
 
-                    <td>
-                        @if (!s.IsPaid && role != "Admin")
+                    @if (role != "Admin")
                         {
-                            <a asp-controller="Payment"
-                               asp-action="Create"
-                               asp-route-loanId="@loanId"
-                               asp-route-scheduleId="@s.ScheduleId"
-                               asp-route-amount="@s.EMIAmount"
-                               class="btn btn-sm btn-primary">
-                                Pay EMI
-                            </a>
+                            <td>
+                                @if (!s.IsPaid)
+                                {
+                                    <a asp-controller="Payment"
+                                    asp-action="Create"
+                                    asp-route-loanId="@loanId"
+                                    asp-route-scheduleId="@s.ScheduleId"
+                                    asp-route-amount="@s.EMIAmount"
+                                    class="btn btn-sm btn-primary">
+                                        Pay EMI
+                                    </a>
+                                }
+                            </td>
                         }
-                    </td>
+                    
                 </tr>
             }
         }

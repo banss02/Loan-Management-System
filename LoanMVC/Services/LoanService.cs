@@ -42,15 +42,25 @@ namespace LoanMVC.Services
 
         public async Task<(bool Success, string Message)> ApplyLoan(ApplyLoanViewModel model)
         {
-            var response = await _httpClient.PostAsJsonAsync("api/Loan", model);
+             var response = await _httpClient.PostAsJsonAsync("api/Loan", model);
 
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorText = await response.Content.ReadAsStringAsync();
-                return (false, string.IsNullOrEmpty(errorText) ? "Loan application failed." : errorText);
-            }
+             if (!response.IsSuccessStatusCode)
+                {
+                   try
+                     {
+                        var error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
 
-            return (true, "Loan application submitted.");
+                       if (error != null && error.TryGetValue("message", out var message))
+                           return (false, message);
+                     }
+                  catch
+                     {
+                     }
+
+                     return (false, "Loan application failed.");
+                }
+
+              return (true, "Loan applied successfully.");
         }
 
         public async Task<bool> ApproveLoan(int id)

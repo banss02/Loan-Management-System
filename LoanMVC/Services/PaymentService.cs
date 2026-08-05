@@ -17,7 +17,6 @@ namespace LoanMVC.Services
             return response.IsSuccessStatusCode;
         }
 
-        // Admin: all payments
         public async Task<List<PaymentViewModel>> GetPayments()
         {
             var response = await _httpClient.GetAsync("api/Payment");
@@ -28,7 +27,6 @@ namespace LoanMVC.Services
                    ?? new List<PaymentViewModel>();
         }
 
-        // Customer: only their own payments (matched by loan -> customer on the API side)
         public async Task<List<PaymentViewModel>> GetPaymentsByCustomerId(int customerId)
         {
             var response = await _httpClient.GetAsync($"api/Payment/customer/{customerId}");

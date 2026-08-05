@@ -13,8 +13,14 @@ namespace LoanMVC.Controllers
             _accountService = accountService;
         }
 
-        public IActionResult Login()
+        public IActionResult Login(string? reason)
         {
+            if (reason == "expired")
+            {
+                ViewBag.SessionExpiredMessage =
+                    "You have been logged out because this account was signed in from another browser or device.";
+            }
+
             return View();
         }
 
@@ -24,11 +30,11 @@ namespace LoanMVC.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            var result = await _accountService.Login(model);
+            var (result, errorMessage) = await _accountService.Login(model);
 
             if (result == null)
             {
-                ModelState.AddModelError("", "Invalid username or password.");
+                ModelState.AddModelError("", errorMessage ?? "Invalid username or password.");
                 return View(model);
             }
 
@@ -42,8 +48,10 @@ namespace LoanMVC.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
+            await _accountService.Logout();
+
             HttpContext.Session.Clear();
             return RedirectToAction("Login");
         }

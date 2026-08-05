@@ -1,13 +1,12 @@
-using System.ComponentModel.DataAnnotations;
-
-namespace LoanAPI.Models
+namespace LoanMVC.Models
 {
-    public class Customer
+    // Matches LoanAPI's AdminCustomerResponseDto - only used on the admin customer list.
+    // The plain CustomerViewModel (used for a customer's own profile) intentionally
+    // does not have AssignedAdminId - that's internal routing info, not customer-facing.
+    public class AdminCustomerViewModel
     {
-        [Key]
         public int CustomerId { get; set; }
         public string FullName { get; set; } = "";
-        public DateTime DateOfBirth { get; set; }
         public string Email { get; set; } = "";
         public string Phone { get; set; } = "";
         public decimal Salary { get; set; }

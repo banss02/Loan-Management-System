@@ -36,5 +36,15 @@ namespace LoanAPI.Repositories
             _context.Customers.Remove(customer);
             await _context.SaveChangesAsync();
         }
+
+        // Which admin manages this one customer (used for a single ownership check)
+        public async Task<int?> GetAssignedAdminId(int customerId) =>
+            (await _context.Customers.FindAsync(customerId))?.AssignedAdminId;
+
+        public async Task<List<int>> GetCustomerIdsAssignedToAdmin(int adminUserId) =>
+            await _context.Customers
+                .Where(c => c.AssignedAdminId == adminUserId)
+                .Select(c => c.CustomerId)
+                .ToListAsync();
     }
 }

@@ -1,8 +1,8 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using LoanAPI.DTOs;
 using LoanAPI.Services;
+using LoanAPI.Helper;
 
 namespace LoanAPI.Controllers
 {
@@ -13,29 +13,29 @@ namespace LoanAPI.Controllers
     {
         private readonly PaymentService _paymentService;
         private readonly LoanService _loanService;
+        private readonly AccessControlService _access;
 
-        public PaymentController(PaymentService paymentService, LoanService loanService)
+        public PaymentController(PaymentService paymentService, LoanService loanService, AccessControlService access)
         {
             _paymentService = paymentService;
             _loanService = loanService;
+            _access = access;
         }
-
-        private bool IsAdmin => User.FindFirst(ClaimTypes.Role)?.Value == "Admin";
-        private int? MyCustomerId =>
-            int.TryParse(User.FindFirst("CustomerId")?.Value, out var id) ? id : null;
 
         [HttpGet]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAll()
         {
             var payments = await _paymentService.GetAllPayments();
-            return Ok(payments);
+            var visibleIds = await _access.GetVisibleCustomerIds(User);
+            var visible = payments.Where(p => visibleIds.Contains(p.CustomerId)).ToList();
+            return Ok(visible);
         }
 
         [HttpGet("customer/{customerId}")]
         public async Task<IActionResult> GetByCustomerId(int customerId)
         {
-            if (!IsAdmin && MyCustomerId != customerId)
+            if (!await _access.CanAccessCustomer(User, customerId))
                 return Forbid();
 
             var payments = await _paymentService.GetPaymentsByCustomerId(customerId);
@@ -49,7 +49,7 @@ namespace LoanAPI.Controllers
             if (loan == null)
                 return NotFound();
 
-            if (!IsAdmin && loan.CustomerId != MyCustomerId)
+            if (!await _access.CanAccessCustomer(User, loan.CustomerId))
                 return Forbid();
 
             var result = await _paymentService.MakePayment(dto);

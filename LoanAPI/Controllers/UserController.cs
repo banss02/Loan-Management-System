@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using LoanAPI.DTOs;
 using LoanAPI.Services;
@@ -20,10 +22,28 @@ namespace LoanAPI.Controllers
         {
             var result = await _userService.Login(dto);
 
-            if (result == null)
-                return Unauthorized(new { message = "Invalid username or password." });
+            if (!result.Success)
+            {
+                if (result.ErrorMessage.Contains("already logged in"))
+                    return Conflict(new { message = result.ErrorMessage });
 
-            return Ok(result);
+                return Unauthorized(new { message = result.ErrorMessage });
+            }
+
+            return Ok(result.Data);
+        }
+
+        [HttpPost("logout")]
+        [Authorize]
+        public async Task<IActionResult> Logout()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(userIdClaim, out var userId))
+            {
+                await _userService.Logout(userId);
+            }
+
+            return Ok(new { message = "Logged out." });
         }
     }
 }

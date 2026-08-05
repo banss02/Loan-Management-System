@@ -1,40 +1,38 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using LoanAPI.DTOs;
 using LoanAPI.Services;
+using LoanAPI.Helper;
 
 namespace LoanAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize] 
-    public class LoanController : ControllerBase
+    [Authorize]     public class LoanController : ControllerBase
     {
         private readonly LoanService _loanService;
+        private readonly AccessControlService _access;
 
-        public LoanController(LoanService loanService)
+        public LoanController(LoanService loanService, AccessControlService access)
         {
             _loanService = loanService;
+            _access = access;
         }
-
-        private int? MyCustomerId =>
-            int.TryParse(User.FindFirst("CustomerId")?.Value, out var id) ? id : null;
-
-        private bool IsAdmin => User.FindFirst(ClaimTypes.Role)?.Value == "Admin";
 
         [HttpGet]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAll()
         {
             var loans = await _loanService.GetAllLoans();
-            return Ok(loans);
+            var visibleIds = await _access.GetVisibleCustomerIds(User);
+            var visible = loans.Where(l => visibleIds.Contains(l.CustomerId)).ToList();
+            return Ok(visible);
         }
 
         [HttpGet("customer/{customerId}")]
         public async Task<IActionResult> GetByCustomerId(int customerId)
         {
-            if (!IsAdmin && MyCustomerId != customerId)
+            if (!await _access.CanAccessCustomer(User, customerId))
                 return Forbid();
 
             var loans = await _loanService.GetLoansByCustomerId(customerId);
@@ -48,7 +46,7 @@ namespace LoanAPI.Controllers
             if (loan == null)
                 return NotFound();
 
-            if (!IsAdmin && loan.CustomerId != MyCustomerId)
+            if (!await _access.CanAccessCustomer(User, loan.CustomerId))
                 return Forbid();
 
             var dto = await _loanService.GetLoanById(id);
@@ -58,13 +56,13 @@ namespace LoanAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> Apply(ApplyLoanDto dto)
         {
-            
-            if (!IsAdmin)
+            if (!AccessControlService.IsAdmin(User))
             {
-                if (MyCustomerId == null)
+                var myCustomerId = AccessControlService.GetMyCustomerId(User);
+                if (myCustomerId == null)
                     return Forbid();
 
-                dto.CustomerId = MyCustomerId.Value;
+                dto.CustomerId = myCustomerId.Value;
             }
 
             var result = await _loanService.ApplyLoan(dto);
@@ -78,6 +76,13 @@ namespace LoanAPI.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Approve(int id)
         {
+            var loan = await _loanService.GetLoanEntityById(id);
+            if (loan == null)
+                return NotFound();
+
+            if (!await _access.CanAccessCustomer(User, loan.CustomerId))
+                return Forbid();
+
             var success = await _loanService.ApproveLoan(id);
             if (!success)
                 return BadRequest(new { message = "Unable to approve loan (not found or not pending)." });
@@ -89,6 +94,13 @@ namespace LoanAPI.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Reject(int id)
         {
+            var loan = await _loanService.GetLoanEntityById(id);
+            if (loan == null)
+                return NotFound();
+
+            if (!await _access.CanAccessCustomer(User, loan.CustomerId))
+                return Forbid();
+
             var success = await _loanService.RejectLoan(id);
             if (!success)
                 return BadRequest(new { message = "Unable to reject loan (not found or not pending)." });

@@ -1,7 +1,7 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using LoanAPI.Services;
+using LoanAPI.Helper;
 
 namespace LoanAPI.Controllers
 {
@@ -12,11 +12,13 @@ namespace LoanAPI.Controllers
     {
         private readonly LoanScheduleService _scheduleService;
         private readonly LoanService _loanService;
+        private readonly AccessControlService _access;
 
-        public LoanScheduleController(LoanScheduleService scheduleService, LoanService loanService)
+        public LoanScheduleController(LoanScheduleService scheduleService, LoanService loanService, AccessControlService access)
         {
             _scheduleService = scheduleService;
             _loanService = loanService;
+            _access = access;
         }
 
         [HttpGet("loan/{loanId}")]
@@ -26,10 +28,7 @@ namespace LoanAPI.Controllers
             if (loan == null)
                 return NotFound();
 
-            var isAdmin = User.FindFirst(ClaimTypes.Role)?.Value == "Admin";
-            var myCustomerId = int.TryParse(User.FindFirst("CustomerId")?.Value, out var id) ? id : (int?)null;
-
-            if (!isAdmin && loan.CustomerId != myCustomerId)
+            if (!await _access.CanAccessCustomer(User, loan.CustomerId))
                 return Forbid();
 
             var schedule = await _scheduleService.GetByLoanId(loanId);

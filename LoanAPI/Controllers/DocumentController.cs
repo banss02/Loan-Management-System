@@ -1,7 +1,7 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using LoanAPI.Services;
+using LoanAPI.Helper;
 
 namespace LoanAPI.Controllers
 {
@@ -11,28 +11,28 @@ namespace LoanAPI.Controllers
     public class DocumentController : ControllerBase
     {
         private readonly DocumentService _documentService;
+        private readonly AccessControlService _access;
 
-        public DocumentController(DocumentService documentService)
+        public DocumentController(DocumentService documentService, AccessControlService access)
         {
             _documentService = documentService;
+            _access = access;
         }
-
-        private bool IsAdmin => User.FindFirst(ClaimTypes.Role)?.Value == "Admin";
-        private int? MyCustomerId =>
-            int.TryParse(User.FindFirst("CustomerId")?.Value, out var id) ? id : null;
 
         [HttpGet]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAll()
         {
             var docs = await _documentService.GetAll();
-            return Ok(docs);
+            var visibleIds = await _access.GetVisibleCustomerIds(User);
+            var visible = docs.Where(d => visibleIds.Contains(d.CustomerId)).ToList();
+            return Ok(visible);
         }
 
         [HttpGet("customer/{customerId}")]
         public async Task<IActionResult> GetByCustomerId(int customerId)
         {
-            if (!IsAdmin && MyCustomerId != customerId)
+            if (!await _access.CanAccessCustomer(User, customerId))
                 return Forbid();
 
             var docs = await _documentService.GetByCustomerId(customerId);
@@ -42,10 +42,11 @@ namespace LoanAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> Upload(IFormFile file)
         {
-            if (MyCustomerId == null && !IsAdmin)
+            var myCustomerId = AccessControlService.GetMyCustomerId(User);
+            if (myCustomerId == null && !AccessControlService.IsAdmin(User))
                 return Forbid();
 
-            var customerId = MyCustomerId ?? 0;
+            var customerId = myCustomerId ?? 0;
             var result = await _documentService.Upload(customerId, file);
             return Ok(result);
         }

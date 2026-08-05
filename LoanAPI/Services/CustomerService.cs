@@ -15,41 +15,42 @@ namespace LoanAPI.Services
             _userRepository = userRepository;
         }
 
-        public async Task<List<CustomerResponseDto>> GetAllCustomers()
+        public async Task<List<AdminCustomerResponseDto>> GetAllCustomersForAdmin()
         {
             var customers = await _repository.GetAllCustomers();
-
-            return customers.Select(c => new CustomerResponseDto
-            {
-                CustomerId = c.CustomerId,
-                FullName = c.FullName,
-                Email = c.Email,
-                Phone = c.Phone,
-                Salary = c.Salary,
-                CIBILScore = c.CIBILScore,
-                EmploymentType = c.EmploymentType,
-                CreatedDate = c.CreatedDate
-            }).ToList();
+            return customers.Select(ToAdminDto).ToList();
         }
 
         public async Task<CustomerResponseDto?> GetCustomerById(int id)
         {
             var customer = await _repository.GetCustomerById(id);
-            if (customer == null)
-                return null;
-
-            return new CustomerResponseDto
-            {
-                CustomerId = customer.CustomerId,
-                FullName = customer.FullName,
-                Email = customer.Email,
-                Phone = customer.Phone,
-                Salary = customer.Salary,
-                CIBILScore = customer.CIBILScore,
-                EmploymentType = customer.EmploymentType,
-                CreatedDate = customer.CreatedDate
-            };
+            return customer == null ? null : ToDto(customer);
         }
+
+        private static CustomerResponseDto ToDto(Customer c) => new CustomerResponseDto
+        {
+            CustomerId = c.CustomerId,
+            FullName = c.FullName,
+            Email = c.Email,
+            Phone = c.Phone,
+            Salary = c.Salary,
+            CIBILScore = c.CIBILScore,
+            EmploymentType = c.EmploymentType,
+            CreatedDate = c.CreatedDate
+        };
+
+        private static AdminCustomerResponseDto ToAdminDto(Customer c) => new AdminCustomerResponseDto
+        {
+            CustomerId = c.CustomerId,
+            FullName = c.FullName,
+            Email = c.Email,
+            Phone = c.Phone,
+            Salary = c.Salary,
+            CIBILScore = c.CIBILScore,
+            EmploymentType = c.EmploymentType,
+            CreatedDate = c.CreatedDate,
+            AssignedAdminId = c.AssignedAdminId
+        };
 
         public async Task<(bool Success, string Message, int CustomerId)> RegisterCustomer(RegisterCustomerDto dto)
         {
@@ -82,7 +83,13 @@ namespace LoanAPI.Services
                 return (false, "Email already exists.", 0);
 
             if (customers.Any(c => c.Phone == dto.Phone))
-                return (false, "Phone number already exists.", 0);
+               return (false, "Phone number already exists.", 0);
+
+            if (dto.Phone.Distinct().Count() == 1)
+               return (false, "Invalid phone number.", 0); 
+
+            if (dto.Phone.Skip(1).Distinct().Count() == 1)
+               return (false, "Invalid phone number.", 0);    
 
             var existingUser = await _userRepository.GetUserByUsername(dto.Username);
             if (existingUser != null)
@@ -97,7 +104,8 @@ namespace LoanAPI.Services
                 Salary = dto.Salary,
                 CIBILScore = dto.CIBILScore,
                 EmploymentType = dto.EmploymentType,
-                CreatedDate = DateTime.Now
+                CreatedDate = DateTime.Now,
+                AssignedAdminId = await GetNextAdminInRotation(customers.Count)
             };
 
             await _repository.AddCustomer(customer);
@@ -113,6 +121,17 @@ namespace LoanAPI.Services
             await _userRepository.AddUser(user);
 
             return (true, "Customer registered successfully.", customer.CustomerId);
+        }
+
+        // Round-robin: admin1 gets customer #0, admin2 gets #1, admin3 gets #2,
+        private async Task<int?> GetNextAdminInRotation(int existingCustomerCount)
+        {
+            var admins = await _userRepository.GetAllAdmins();
+            if (admins.Count == 0)
+                return null;
+
+            var index = existingCustomerCount % admins.Count;
+            return admins[index].UserId;
         }
 
         public async Task<(bool Success, string Message)> UpdateCustomer(int id, UpdateCustomerDto dto)
@@ -134,12 +153,20 @@ namespace LoanAPI.Services
             if (employment != "salaried" && employment != "self-employed" && employment != "business")
                 return (false, "Invalid Employment Type.");
 
-            // only re-check uniqueness if the value actually changed
             var allCustomers = await _repository.GetAllCustomers();
             if (dto.Email != customer.Email && allCustomers.Any(c => c.Email == dto.Email))
                 return (false, "Email already exists.");
+
             if (dto.Phone != customer.Phone && allCustomers.Any(c => c.Phone == dto.Phone))
                 return (false, "Phone number already exists.");
+
+            if (dto.Phone.Distinct().Count() == 1)
+                 return (false, "Invalid phone number.");
+
+            if (dto.Phone.Skip(1).Distinct().Count() == 1)
+                  return (false, "Invalid phone number.");
+
+                
 
             customer.FullName = dto.FullName;
             customer.Email = dto.Email;
@@ -161,5 +188,14 @@ namespace LoanAPI.Services
             await _repository.DeleteCustomer(customer);
             return (true, "Customer deleted successfully.");
         }
+
+        public async Task<bool> IsCustomerAssignedToAdmin(int customerId, int adminUserId)
+        {
+            var assignedId = await _repository.GetAssignedAdminId(customerId);
+            return assignedId == adminUserId;
+        }
+
+        public async Task<List<int>> GetCustomerIdsForAdmin(int adminUserId) =>
+            await _repository.GetCustomerIdsAssignedToAdmin(adminUserId);
     }
 }

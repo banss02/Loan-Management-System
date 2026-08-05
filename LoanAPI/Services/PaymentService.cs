@@ -18,13 +18,13 @@ namespace LoanAPI.Services
         public async Task<List<PaymentResponseDto>> GetAllPayments()
         {
             var payments = await _paymentRepository.GetAllPayments();
-            return payments.Select(ToDto).ToList();
+            return payments.Select(p => ToDto(p, p.Loan?.CustomerId ?? 0)).ToList();
         }
 
         public async Task<List<PaymentResponseDto>> GetPaymentsByCustomerId(int customerId)
         {
             var payments = await _paymentRepository.GetPaymentsByCustomerId(customerId);
-            return payments.Select(ToDto).ToList();
+            return payments.Select(p => ToDto(p, customerId)).ToList();
         }
 
         public async Task<(bool Success, string Message)> MakePayment(PaymentDto dto)
@@ -32,7 +32,6 @@ namespace LoanAPI.Services
             if (dto.Amount <= 0)
                 return (false, "Amount must be greater than zero.");
 
-            // If this payment is tied to a specific EMI installment, validate against it first
             if (dto.ScheduleId.HasValue)
             {
                 var schedule = await _scheduleRepository.GetById(dto.ScheduleId.Value);
@@ -53,9 +52,6 @@ namespace LoanAPI.Services
 
             await _paymentRepository.AddPayment(payment);
 
-            // Re-check: only mark the installment paid once total payments against it
-            // reach (or exceed) the EMI amount - partial payments accumulate instead of
-            // instantly flipping IsPaid on the first rupee.
             if (dto.ScheduleId.HasValue)
             {
                 var schedule = await _scheduleRepository.GetById(dto.ScheduleId.Value);
@@ -74,10 +70,11 @@ namespace LoanAPI.Services
             return (true, "Payment recorded successfully.");
         }
 
-        private static PaymentResponseDto ToDto(Payment p) => new PaymentResponseDto
+        private static PaymentResponseDto ToDto(Payment p, int customerId) => new PaymentResponseDto
         {
             PaymentId = p.PaymentId,
             LoanId = p.LoanId,
+            CustomerId = customerId,
             ScheduleId = p.ScheduleId,
             Amount = p.Amount,
             PaymentDate = p.PaymentDate

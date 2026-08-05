@@ -9,7 +9,7 @@ namespace LoanMVC.Filters
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false)]
     public class SessionAuthAttribute : Attribute, IAuthorizationFilter
     {
-        public string Roles { get; set; } = ""; 
+        public string Roles { get; set; } = "";
 
         public void OnAuthorization(AuthorizationFilterContext context)
         {
@@ -18,19 +18,29 @@ namespace LoanMVC.Filters
 
             if (string.IsNullOrEmpty(token))
             {
-                context.Result = new RedirectToActionResult("Login", "Account", null);
+                if (context.HttpContext.Request.Cookies.ContainsKey("SessionExpiredElsewhere"))
+                {
+                    context.HttpContext.Response.Cookies.Delete("SessionExpiredElsewhere");
+                    context.Result = new RedirectToActionResult("Login", "Account", new { reason = "expired" });
+                }
+                else
+                {
+                    context.Result = new RedirectToActionResult("Login", "Account", null);
+                }
+
                 return;
             }
 
             if (!string.IsNullOrEmpty(Roles))
             {
                 var userRole = session.GetString("Role") ?? "";
-               if (!userRole.Equals(Roles, StringComparison.OrdinalIgnoreCase))
+                var allowedRoles = Roles.Split(',', StringSplitOptions.TrimEntries);
+
+                if (!allowedRoles.Contains(userRole, StringComparer.OrdinalIgnoreCase))
                 {
-                       context.Result = new ForbidResult();
-                }
+                    context.Result = new ForbidResult();
                 }
             }
         }
     }
-
+}
