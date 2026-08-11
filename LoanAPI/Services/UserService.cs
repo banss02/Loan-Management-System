@@ -30,7 +30,7 @@ namespace LoanAPI.Services
 
             if (hasActiveSession)
             {
-                return (false, "This account is already logged in on another browser or device. P lease log out from that session first.", null);
+                return (false, "This account is already logged in on another browser or device. Please log out from that session first.", null);
             }
 
             var sessionId = Guid.NewGuid().ToString();
