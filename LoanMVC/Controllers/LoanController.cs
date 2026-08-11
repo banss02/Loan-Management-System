@@ -9,10 +9,12 @@ namespace LoanMVC.Controllers
     public class LoanController : Controller
     {
         private readonly LoanService _loanService;
+        private readonly LoanScheduleService _scheduleService;
 
-        public LoanController(LoanService loanService)
+        public LoanController(LoanService loanService, LoanScheduleService scheduleService)
         {
             _loanService = loanService;
+            _scheduleService = scheduleService;
         }
 
         public async Task<IActionResult> Index()
@@ -73,6 +75,17 @@ namespace LoanMVC.Controllers
                 var customerId = HttpContext.Session.GetInt32("CustomerId");
                 if (loan.CustomerId != customerId)
                     return Forbid();
+            }
+
+            if (loan.Status == "Approved")
+            {
+                var schedule = await _scheduleService.GetScheduleByLoanId(id);
+                var totalEmis = schedule.Count;
+                var paidEmis = schedule.Count(s => s.IsPaid);
+
+                ViewBag.TotalEmis = totalEmis;
+                ViewBag.PaidEmis = paidEmis;
+                ViewBag.ProgressPercent = totalEmis > 0 ? (int)Math.Round(paidEmis * 100.0 / totalEmis) : 0;
             }
 
             return View(loan);

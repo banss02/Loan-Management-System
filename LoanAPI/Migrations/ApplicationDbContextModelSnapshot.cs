@@ -17,7 +17,7 @@ namespace LoanAPI.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.10")
+                .HasAnnotation("ProductVersion", "8.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -30,17 +30,26 @@ namespace LoanAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CustomerId"));
 
-                    b.Property<int?>("AssignedAdminId")
-                        .HasColumnType("int");
+                    b.Property<string>("AadhaarNumber")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("CIBILScore")
-                        .HasColumnType("int");
+                    b.Property<string>("AccountNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Address")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("BankName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CompanyName")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("DateOfBirth")
-                        .HasColumnType("datetime2");
+                    b.Property<DateOnly>("DateOfBirth")
+                        .HasColumnType("date");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -52,6 +61,15 @@ namespace LoanAPI.Migrations
 
                     b.Property<string>("FullName")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("GuardianName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("IFSCCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PANNumber")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Phone")
@@ -175,6 +193,21 @@ namespace LoanAPI.Migrations
                     b.ToTable("LoanSchedules");
                 });
 
+            modelBuilder.Entity("LoanAPI.Models.LoanTypeAssignment", b =>
+                {
+                    b.Property<string>("LoanType")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("LoanType");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("LoanTypeAssignments");
+                });
+
             modelBuilder.Entity("LoanAPI.Models.Payment", b =>
                 {
                     b.Property<int>("PaymentId")
@@ -276,6 +309,17 @@ namespace LoanAPI.Migrations
                     b.Navigation("Loan");
                 });
 
+            modelBuilder.Entity("LoanAPI.Models.LoanTypeAssignment", b =>
+                {
+                    b.HasOne("LoanAPI.Models.User", "Admin")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Admin");
+                });
+
             modelBuilder.Entity("LoanAPI.Models.Payment", b =>
                 {
                     b.HasOne("LoanAPI.Models.Loan", "Loan")
@@ -286,8 +330,7 @@ namespace LoanAPI.Migrations
 
                     b.HasOne("LoanAPI.Models.LoanSchedule", "Schedule")
                         .WithMany()
-                        .HasForeignKey("ScheduleId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .HasForeignKey("ScheduleId");
 
                     b.Navigation("Loan");
 

@@ -11,7 +11,7 @@ namespace LoanMVC.Services
             _httpClient = httpClient;
         }
 
-        public async Task<bool> Upload(IFormFile file)
+        public async Task<bool> Upload(int customerId, IFormFile file)
         {
             using var content = new MultipartFormDataContent();
             using var fileStream = file.OpenReadStream();
@@ -22,7 +22,7 @@ namespace LoanMVC.Services
 
             content.Add(streamContent, "file", file.FileName);
 
-            var response = await _httpClient.PostAsync("api/Document", content);
+            var response = await _httpClient.PostAsync($"api/Document/upload/{customerId}", content);
             return response.IsSuccessStatusCode;
         }
 

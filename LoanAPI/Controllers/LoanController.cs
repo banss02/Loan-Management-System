@@ -23,10 +23,12 @@ namespace LoanAPI.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAll()
         {
-            var loans = await _loanService.GetAllLoans();
-            var visibleIds = await _access.GetVisibleCustomerIds(User);
-            var visible = loans.Where(l => visibleIds.Contains(l.CustomerId)).ToList();
-            return Ok(visible);
+            var UserId = int.Parse(
+            User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+
+           var loans = await _loanService.GetLoansForAdmin(UserId);
+
+           return Ok(loans);
         }
 
         [HttpGet("customer/{customerId}")]

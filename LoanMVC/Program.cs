@@ -6,7 +6,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 
-var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "https://localhost:5000/";
+var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "https://localhost:5001/";
+
+Console.WriteLine($"API Base URL = {apiBaseUrl}");
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<AuthHeaderHandler>();

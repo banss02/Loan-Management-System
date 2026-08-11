@@ -1,5 +1,4 @@
 using LoanMVC.Models;
-using System.Text.Json;
 
 namespace LoanMVC.Services
 {
@@ -12,35 +11,57 @@ namespace LoanMVC.Services
             _httpClient = httpClient;
         }
 
-        public async Task<(bool Success, string Message)> Register(RegisterCustomerViewModel model)
+        public async Task<(bool Success, int CustomerId, string Message)> Register(RegisterCustomerViewModel model)
         {
             var response = await _httpClient.PostAsJsonAsync("api/Customer", model);
 
             RegisterCustomerResponseViewModel? result = null;
+
             try
             {
                 result = await response.Content.ReadFromJsonAsync<RegisterCustomerResponseViewModel>();
             }
             catch
             {
-                // API might return a plain string error - ignore parse failure, fall back below
             }
 
             if (!response.IsSuccessStatusCode)
             {
-                var errorText = result?.Message;
-                if (string.IsNullOrEmpty(errorText))
-                    errorText = await response.Content.ReadAsStringAsync();
+                var error = result?.Message;
 
-                return (false, string.IsNullOrEmpty(errorText) ? "Registration failed." : errorText);
+                if (string.IsNullOrEmpty(error))
+                    error = await response.Content.ReadAsStringAsync();
+
+                return (false, 0, error ?? "Registration failed.");
             }
 
-            return (true, result?.Message ?? "Customer registered successfully.");
+            return (
+                true,
+                result?.CustomerId ?? 0,
+                result?.Message ?? "Customer registered successfully."
+            );
+        }
+
+        public async Task UploadDocument(int customerId, IFormFile file)
+        {
+            using var form = new MultipartFormDataContent();
+
+            form.Add(
+                new StreamContent(file.OpenReadStream()),
+                "file",
+                file.FileName);
+
+            var response = await _httpClient.PostAsync(
+                $"api/Document/upload/{customerId}",
+                form);
+
+            response.EnsureSuccessStatusCode();
         }
 
         public async Task<CustomerViewModel?> GetCustomerById(int id)
         {
             var response = await _httpClient.GetAsync($"api/Customer/{id}");
+
             if (!response.IsSuccessStatusCode)
                 return null;
 
@@ -50,6 +71,7 @@ namespace LoanMVC.Services
         public async Task<List<AdminCustomerViewModel>> GetAllCustomers()
         {
             var response = await _httpClient.GetAsync("api/Customer");
+
             if (!response.IsSuccessStatusCode)
                 return new List<AdminCustomerViewModel>();
 
@@ -59,30 +81,23 @@ namespace LoanMVC.Services
 
         public async Task<(bool Success, string Message)> UpdateCustomer(int id, UpdateCustomerViewModel model)
         {
-           var response = await _httpClient.PutAsJsonAsync($"api/Customer/{id}", model);
+            var response = await _httpClient.PutAsJsonAsync($"api/Customer/{id}", model);
 
-           if (!response.IsSuccessStatusCode)
-           {
-           try
-           {
-            var error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                return (false, string.IsNullOrEmpty(error) ? "Update failed." : error);
+            }
 
-            if (error != null && error.TryGetValue("message", out var message))
-                return (false, message);
-           }
-           catch
-           {
-            // Ignore parse errors
-           }
-           return (false, "Update failed.");
-          }
-        return (true, "Profile updated successfully.");
-       }
+            return (true, "Profile updated successfully.");
+        }
 
         public async Task<bool> DeleteCustomer(int id)
         {
             var response = await _httpClient.DeleteAsync($"api/Customer/{id}");
             return response.IsSuccessStatusCode;
         }
+
+        
     }
 }

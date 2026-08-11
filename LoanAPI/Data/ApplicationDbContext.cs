@@ -14,20 +14,49 @@ namespace LoanAPI.Data
         public DbSet<LoanSchedule> LoanSchedules => Set<LoanSchedule>();
         public DbSet<Payment> Payments => Set<Payment>();
         public DbSet<Document> Documents => Set<Document>();
+        public DbSet<LoanTypeAssignment> LoanTypeAssignments => Set<LoanTypeAssignment>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Customer>().Property(c => c.Salary).HasColumnType("decimal(18,2)");
-            modelBuilder.Entity<Loan>().Property(l => l.LoanAmount).HasColumnType("decimal(18,2)");
-            modelBuilder.Entity<Loan>().Property(l => l.InterestRate).HasColumnType("decimal(5,2)");
-            modelBuilder.Entity<LoanSchedule>().Property(s => s.EMIAmount).HasColumnType("decimal(18,2)");
-            modelBuilder.Entity<LoanSchedule>().Property(s => s.PrincipalAmount).HasColumnType("decimal(18,2)");
-            modelBuilder.Entity<LoanSchedule>().Property(s => s.InterestAmount).HasColumnType("decimal(18,2)");
-            modelBuilder.Entity<Payment>().Property(p => p.Amount).HasColumnType("decimal(18,2)");
+            modelBuilder.Entity<Customer>()
+                .Property(c => c.Salary)
+                .HasColumnType("decimal(18,2)");
 
-            modelBuilder.Entity<Customer>().HasIndex(c => c.Email).IsUnique();
-            modelBuilder.Entity<Customer>().HasIndex(c => c.Phone).IsUnique();
-            modelBuilder.Entity<User>().HasIndex(u => u.Username).IsUnique();
+            modelBuilder.Entity<Loan>()
+                .Property(l => l.LoanAmount)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<Loan>()
+                .Property(l => l.InterestRate)
+                .HasColumnType("decimal(5,2)");
+
+            modelBuilder.Entity<LoanSchedule>()
+                .Property(s => s.EMIAmount)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<LoanSchedule>()
+                .Property(s => s.PrincipalAmount)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<LoanSchedule>()
+                .Property(s => s.InterestAmount)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<Payment>()
+                .Property(p => p.Amount)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<Customer>()
+                .HasIndex(c => c.Email)
+                .IsUnique();
+
+            modelBuilder.Entity<Customer>()
+                .HasIndex(c => c.Phone)
+                .IsUnique();
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Username)
+                .IsUnique();
 
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Customer)
@@ -53,16 +82,19 @@ namespace LoanAPI.Data
                 .HasForeignKey(p => p.LoanId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<Payment>()
-                .HasOne(p => p.Schedule)
-                .WithMany()
-                .HasForeignKey(p => p.ScheduleId)
-                .OnDelete(DeleteBehavior.SetNull);
-
             modelBuilder.Entity<Document>()
                 .HasOne(d => d.Customer)
                 .WithMany()
                 .HasForeignKey(d => d.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<LoanTypeAssignment>()
+                .HasKey(a => a.LoanType);
+
+            modelBuilder.Entity<LoanTypeAssignment>()
+                .HasOne(a => a.Admin)
+                .WithMany()
+                .HasForeignKey(a => a.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

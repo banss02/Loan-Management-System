@@ -1,20 +1,18 @@
 namespace LoanMVC.Models
 {
-    public class AdminCustomerViewModel
+    public class ExtractedCustomerDataViewModel
     {
-        public int CustomerId { get; set; }
+        public string? FullName { get; set; }
 
-        public string FullName { get; set; } = "";
+        public DateOnly? DateOfBirth { get; set; }
 
-        public DateOnly DateOfBirth { get; set; }
+        public string? Email { get; set; }
 
-        public string Email { get; set; } = "";
+        public string? Phone { get; set; }
 
-        public string Phone { get; set; } = "";
+        public decimal? Salary { get; set; }
 
-        public decimal Salary { get; set; }
-
-        public string EmploymentType { get; set; } = "";
+        public string? EmploymentType { get; set; }
 
         public string? CompanyName { get; set; }
 
@@ -32,6 +30,6 @@ namespace LoanMVC.Models
 
         public string? IFSCCode { get; set; }
 
-        public DateTime CreatedDate { get; set; }
+        public int FieldsFound { get; set; }
     }
 }

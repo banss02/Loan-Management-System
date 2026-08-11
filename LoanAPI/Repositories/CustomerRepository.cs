@@ -29,22 +29,44 @@ namespace LoanAPI.Repositories
         {
             _context.Customers.Update(customer);
             await _context.SaveChangesAsync();
-        }
+        } 
 
         public async Task DeleteCustomer(Customer customer)
-        {
-            _context.Customers.Remove(customer);
-            await _context.SaveChangesAsync();
-        }
+{
 
-        // Which admin manages this one customer (used for a single ownership check)
-        public async Task<int?> GetAssignedAdminId(int customerId) =>
-            (await _context.Customers.FindAsync(customerId))?.AssignedAdminId;
+    var user = await _context.Users
+        .FirstOrDefaultAsync(u => u.CustomerId == customer.CustomerId); 
 
-        public async Task<List<int>> GetCustomerIdsAssignedToAdmin(int adminUserId) =>
-            await _context.Customers
-                .Where(c => c.AssignedAdminId == adminUserId)
-                .Select(c => c.CustomerId)
-                .ToListAsync();
+    if (user != null)
+    {
+        _context.Users.Remove(user);
+    }
+
+    var documents = _context.Documents
+        .Where(d => d.CustomerId == customer.CustomerId);
+    _context.Documents.RemoveRange(documents);
+
+    var loans = await _context.Loans
+        .Where(l => l.CustomerId == customer.CustomerId)
+        .ToListAsync();
+
+    foreach (var loan in loans)
+    {
+        var schedules = _context.LoanSchedules
+            .Where(s => s.LoanId == loan.LoanId);
+        _context.LoanSchedules.RemoveRange(schedules);
+
+        var payments = _context.Payments
+            .Where(p => p.LoanId == loan.LoanId);
+        _context.Payments.RemoveRange(payments);
+    }
+
+    _context.Loans.RemoveRange(loans);
+
+    _context.Customers.Remove(customer);
+
+    await _context.SaveChangesAsync();
+}
+
     }
 }

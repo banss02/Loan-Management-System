@@ -2,32 +2,120 @@
 
 @{
     ViewData["Title"] = "Loan Details";
+
+    int paidEmis = ViewBag.PaidEmis ?? 0;
+    int totalEmis = ViewBag.TotalEmis ?? 0;
+    int progress = ViewBag.ProgressPercent ?? 0;
+
+    int remainingEmis = totalEmis - paidEmis;
+
+    string progressClass;
+
+    if (progress == 100)
+    {
+        progressClass = "bg-success";
+    }
+    else if (progress >= 50)
+    {
+        progressClass = "bg-info";
+    }
+    else
+    {
+        progressClass = "bg-warning";
+    }
 }
 
-<h2>Loan Details</h2>
+<h2 class="mb-4">Loan Details</h2>
 
-<dl class="row">
-    <dt class="col-sm-3">Loan Id</dt>
-    <dd class="col-sm-9">@Model.LoanId</dd>
+<div class="card mb-4">
+    <div class="card-body">
 
-    <dt class="col-sm-3">Loan Type</dt>
-    <dd class="col-sm-9">@Model.LoanType</dd>
+        <dl class="row">
 
-    <dt class="col-sm-3">Amount</dt>
-    <dd class="col-sm-9">@Model.LoanAmount</dd>
+            <dt class="col-sm-3">Loan ID</dt>
+            <dd class="col-sm-9">@Model.LoanId</dd>
 
-    <dt class="col-sm-3">Tenure</dt>
-    <dd class="col-sm-9">@Model.TenureMonths months</dd>
+            <dt class="col-sm-3">Loan Type</dt>
+            <dd class="col-sm-9">@Model.LoanType</dd>
 
-    <dt class="col-sm-3">Interest Rate</dt>
-    <dd class="col-sm-9">@Model.InterestRate %</dd>
+            <dt class="col-sm-3">Loan Amount</dt>
+            <dd class="col-sm-9">
+                ₹@Model.LoanAmount.ToString("N2")
+            </dd>
 
-    <dt class="col-sm-3">Status</dt>
-    <dd class="col-sm-9">@Model.Status</dd>
+            <dt class="col-sm-3">Tenure</dt>
+            <dd class="col-sm-9">
+                @Model.TenureMonths Months
+            </dd>
 
-    <dt class="col-sm-3">Applied Date</dt>
-    <dd class="col-sm-9">@Model.AppliedDate.ToShortDateString()</dd>
-</dl>
+            <dt class="col-sm-3">Interest Rate</dt>
+            <dd class="col-sm-9">
+                @Model.InterestRate %
+            </dd>
 
-<a asp-controller="LoanSchedule" asp-action="Index" asp-route-loanId="@Model.LoanId" class="btn btn-warning">View EMI Schedule</a>
-<a asp-action="Index" class="btn btn-secondary">Back</a>
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">
+                <span class="badge bg-primary">@Model.Status</span>
+            </dd>
+
+            <dt class="col-sm-3">Applied Date</dt>
+            <dd class="col-sm-9">
+                @Model.AppliedDate.ToString("dd MMM yyyy")
+            </dd>
+
+        </dl>
+
+    </div>
+</div>
+
+@if (Model.Status == "Approved")
+{
+    <div class="card shadow-sm mb-4 mx-auto" style="max-width:700px;">
+
+        <div class="card-body">
+
+            <h5 class="mb-3">
+                EMI Repayment Progress
+            </h5>
+
+            <div class="progress mb-3" style="height:22px;">
+
+                <div class="progress-bar @progressClass"role="progressbar"style="width:@progress%;"aria-valuenow="@progress"aria-valuemin="0"aria-valuemax="100">@progress%</div>
+            </div>
+
+            <div class="row text-center g-2">
+
+                <div class="col-md-4"><div class="border rounded p-2"><h4 class="text-success mb-1">@paidEmis</h4><small>Paid EMIs</small></div></div>
+                <div class="col-md-4"><div class="border rounded p-2"><h4 class="text-danger mb-1">@remainingEmis</h4><small>Remaining EMIs</small></div></div>
+                <div class="col-md-4"><div class="border rounded p-2"><h4 class="mb-1">@totalEmis</h4><small>Total EMIs</small></div></div>
+
+            </div>
+
+            @if (ViewBag.NextDueDate != null)
+            {
+                <hr />
+
+                <p class="mt-3">
+                    <strong>Next EMI Due :</strong>
+                    @(((DateTime)ViewBag.NextDueDate).ToString("dd MMM yyyy"))
+                </p>
+            }
+
+            @if (progress == 100)
+            {
+                <div class="alert alert-success mt-3">
+                    🎉 <strong>Congratulations!</strong> Your loan has been fully repaid.
+                </div>
+            }
+
+        </div>
+
+    </div>
+}
+
+<div class="mt-3">
+    <a asp-controller="LoanSchedule"asp-action="Index"asp-route-loanId="@Model.LoanId"class="btn btn-warning">View EMI Schedule</a>
+
+    <a asp-action="Index"class="btn btn-secondary">Back</a>
+
+</div>

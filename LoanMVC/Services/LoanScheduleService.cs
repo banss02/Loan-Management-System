@@ -14,7 +14,7 @@ namespace LoanMVC.Services
         public async Task<List<LoanScheduleViewModel>> GetScheduleByLoanId(int loanId)
         {
             var response = await _httpClient.GetAsync($"api/LoanSchedule/loan/{loanId}");
-            if (!response.IsSuccessStatusCode)
+            if (!response.IsSuccessStatusCode) 
                 return new List<LoanScheduleViewModel>();
 
             return await response.Content.ReadFromJsonAsync<List<LoanScheduleViewModel>>()

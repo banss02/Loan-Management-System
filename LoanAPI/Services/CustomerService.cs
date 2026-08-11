@@ -1,6 +1,7 @@
 using LoanAPI.Models;
 using LoanAPI.Repositories;
 using LoanAPI.DTOs;
+using LoanAPI.Helper;
 
 namespace LoanAPI.Services
 {
@@ -9,47 +10,80 @@ namespace LoanAPI.Services
         private readonly CustomerRepository _repository;
         private readonly UserRepository _userRepository;
 
-        public CustomerService(CustomerRepository repository, UserRepository userRepository)
+        private readonly EncryptionService _encryptionService;
+
+        public CustomerService(CustomerRepository repository, UserRepository userRepository, EncryptionService encryptionService)
         {
             _repository = repository;
             _userRepository = userRepository;
+            _encryptionService = encryptionService;
         }
 
         public async Task<List<AdminCustomerResponseDto>> GetAllCustomersForAdmin()
         {
             var customers = await _repository.GetAllCustomers();
-            return customers.Select(ToAdminDto).ToList();
+            var result = new List<AdminCustomerResponseDto>();
+
+            foreach (var customer in customers)
+            {
+                  var userId = await _userRepository.GetUserIdByCustomerId(customer.CustomerId);
+                  result.Add(ToAdminDto(customer, userId));
+            }
+
+            return result;
         }
 
         public async Task<CustomerResponseDto?> GetCustomerById(int id)
         {
             var customer = await _repository.GetCustomerById(id);
-            return customer == null ? null : ToDto(customer);
+
+            if (customer == null)
+                   return null;
+
+            var userId = await _userRepository.GetUserIdByCustomerId(id);
+
+            return ToDto(customer, userId);
         }
 
-        private static CustomerResponseDto ToDto(Customer c) => new CustomerResponseDto
+        private CustomerResponseDto ToDto(Customer c, int? userId) => new CustomerResponseDto
         {
             CustomerId = c.CustomerId,
             FullName = c.FullName,
+            DateOfBirth = c.DateOfBirth,
             Email = c.Email,
             Phone = c.Phone,
             Salary = c.Salary,
-            CIBILScore = c.CIBILScore,
-            EmploymentType = c.EmploymentType,
-            CreatedDate = c.CreatedDate
-        };
-
-        private static AdminCustomerResponseDto ToAdminDto(Customer c) => new AdminCustomerResponseDto
-        {
-            CustomerId = c.CustomerId,
-            FullName = c.FullName,
-            Email = c.Email,
-            Phone = c.Phone,
-            Salary = c.Salary,
-            CIBILScore = c.CIBILScore,
             EmploymentType = c.EmploymentType,
             CreatedDate = c.CreatedDate,
-            AssignedAdminId = c.AssignedAdminId
+            CompanyName = c.CompanyName,
+            PANNumber = userId.HasValue? _encryptionService.Decrypt(c.PANNumber, userId.Value): c.PANNumber,
+            AadhaarNumber = userId.HasValue? _encryptionService.Decrypt(c.AadhaarNumber, userId.Value): c.AadhaarNumber,
+            Address = c.Address,
+            GuardianName = c.GuardianName,
+            BankName = c.BankName,
+            AccountNumber = userId.HasValue? _encryptionService.Decrypt(c.AccountNumber, userId.Value): c.AccountNumber,
+            IFSCCode = c.IFSCCode,
+
+        };
+
+        private AdminCustomerResponseDto ToAdminDto(Customer c, int? userId) => new AdminCustomerResponseDto
+        {
+            CustomerId = c.CustomerId,
+            FullName = c.FullName,
+            DateOfBirth = c.DateOfBirth,
+            Email = c.Email,
+            Phone = c.Phone,
+            Salary = c.Salary,
+            EmploymentType = c.EmploymentType,
+            CompanyName = c.CompanyName,
+            PANNumber = userId.HasValue? _encryptionService.Decrypt(c.PANNumber, userId.Value): c.PANNumber,
+            AadhaarNumber = userId.HasValue? _encryptionService.Decrypt(c.AadhaarNumber, userId.Value): c.AadhaarNumber,
+            GuardianName = c.GuardianName,
+            Address = c.Address,
+            BankName = c.BankName,
+            AccountNumber = userId.HasValue? _encryptionService.Decrypt(c.AccountNumber, userId.Value): c.AccountNumber,
+            IFSCCode = c.IFSCCode,
+            CreatedDate = c.CreatedDate
         };
 
         public async Task<(bool Success, string Message, int CustomerId)> RegisterCustomer(RegisterCustomerDto dto)
@@ -58,7 +92,7 @@ namespace LoanAPI.Services
                 return (false, "Full Name is required.", 0);
 
             int age = DateTime.Now.Year - dto.DateOfBirth.Year;
-            if (dto.DateOfBirth > DateTime.Now.AddYears(-age))
+            if (dto.DateOfBirth > DateOnly.FromDateTime(DateTime.Now.AddYears(-age)))
                 age--;
 
             if (age < 21)
@@ -66,9 +100,6 @@ namespace LoanAPI.Services
 
             if (dto.Salary <= 0)
                 return (false, "Salary must be greater than zero.", 0);
-
-            if (dto.CIBILScore < 300 || dto.CIBILScore > 900)
-                return (false, "Invalid CIBIL Score.", 0);
 
             var employment = dto.EmploymentType.ToLower();
             if (employment != "salaried" && employment != "self-employed" && employment != "business")
@@ -83,13 +114,7 @@ namespace LoanAPI.Services
                 return (false, "Email already exists.", 0);
 
             if (customers.Any(c => c.Phone == dto.Phone))
-               return (false, "Phone number already exists.", 0);
-
-            if (dto.Phone.Distinct().Count() == 1)
-               return (false, "Invalid phone number.", 0); 
-
-            if (dto.Phone.Skip(1).Distinct().Count() == 1)
-               return (false, "Invalid phone number.", 0);    
+                return (false, "Phone number already exists.", 0);
 
             var existingUser = await _userRepository.GetUserByUsername(dto.Username);
             if (existingUser != null)
@@ -102,10 +127,8 @@ namespace LoanAPI.Services
                 Email = dto.Email,
                 Phone = dto.Phone,
                 Salary = dto.Salary,
-                CIBILScore = dto.CIBILScore,
                 EmploymentType = dto.EmploymentType,
                 CreatedDate = DateTime.Now,
-                AssignedAdminId = await GetNextAdminInRotation(customers.Count)
             };
 
             await _repository.AddCustomer(customer);
@@ -119,20 +142,22 @@ namespace LoanAPI.Services
             };
 
             await _userRepository.AddUser(user);
+            
+
+            customer.CompanyName = dto.CompanyName;
+            customer.PANNumber = _encryptionService.Encrypt(dto.PANNumber, user.UserId);
+            customer.AadhaarNumber = _encryptionService.Encrypt(dto.AadhaarNumber, user.UserId);
+            customer.GuardianName = dto.GuardianName;
+            customer.Address = dto.Address;
+            customer.BankName = dto.BankName;
+            customer.AccountNumber = _encryptionService.Encrypt(dto.AccountNumber, user.UserId);
+            customer.IFSCCode = dto.IFSCCode;
+
+            await _repository.UpdateCustomer(customer);
 
             return (true, "Customer registered successfully.", customer.CustomerId);
         }
 
-        // Round-robin: admin1 gets customer #0, admin2 gets #1, admin3 gets #2,
-        private async Task<int?> GetNextAdminInRotation(int existingCustomerCount)
-        {
-            var admins = await _userRepository.GetAllAdmins();
-            if (admins.Count == 0)
-                return null;
-
-            var index = existingCustomerCount % admins.Count;
-            return admins[index].UserId;
-        }
 
         public async Task<(bool Success, string Message)> UpdateCustomer(int id, UpdateCustomerDto dto)
         {
@@ -146,9 +171,6 @@ namespace LoanAPI.Services
             if (dto.Salary <= 0)
                 return (false, "Salary must be greater than zero.");
 
-            if (dto.CIBILScore < 300 || dto.CIBILScore > 900)
-                return (false, "Invalid CIBIL Score.");
-
             var employment = dto.EmploymentType.ToLower();
             if (employment != "salaried" && employment != "self-employed" && employment != "business")
                 return (false, "Invalid Employment Type.");
@@ -156,24 +178,28 @@ namespace LoanAPI.Services
             var allCustomers = await _repository.GetAllCustomers();
             if (dto.Email != customer.Email && allCustomers.Any(c => c.Email == dto.Email))
                 return (false, "Email already exists.");
-
             if (dto.Phone != customer.Phone && allCustomers.Any(c => c.Phone == dto.Phone))
                 return (false, "Phone number already exists.");
 
-            if (dto.Phone.Distinct().Count() == 1)
-                 return (false, "Invalid phone number.");
+            var userId = await _userRepository.GetUserIdByCustomerId(id);
 
-            if (dto.Phone.Skip(1).Distinct().Count() == 1)
-                  return (false, "Invalid phone number.");
-
-                
+            if (userId == null)
+                return (false, "User not found.");
 
             customer.FullName = dto.FullName;
             customer.Email = dto.Email;
             customer.Phone = dto.Phone;
             customer.Salary = dto.Salary;
-            customer.CIBILScore = dto.CIBILScore;
             customer.EmploymentType = dto.EmploymentType;
+            customer.CompanyName = dto.CompanyName;
+            customer.PANNumber = _encryptionService.Encrypt(dto.PANNumber, userId.Value);
+            customer.AadhaarNumber = _encryptionService.Encrypt(dto.AadhaarNumber, userId.Value);
+            customer.GuardianName = dto.GuardianName;
+            customer.Address = dto.Address;
+            customer.BankName = dto.BankName;
+            customer.AccountNumber = _encryptionService.Encrypt(dto.AccountNumber, userId.Value);
+            customer.IFSCCode = dto.IFSCCode;   
+
 
             await _repository.UpdateCustomer(customer);
             return (true, "Customer updated successfully.");
@@ -189,13 +215,5 @@ namespace LoanAPI.Services
             return (true, "Customer deleted successfully.");
         }
 
-        public async Task<bool> IsCustomerAssignedToAdmin(int customerId, int adminUserId)
-        {
-            var assignedId = await _repository.GetAssignedAdminId(customerId);
-            return assignedId == adminUserId;
-        }
-
-        public async Task<List<int>> GetCustomerIdsForAdmin(int adminUserId) =>
-            await _repository.GetCustomerIdsAssignedToAdmin(adminUserId);
     }
 }

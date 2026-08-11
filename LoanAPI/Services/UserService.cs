@@ -30,12 +30,12 @@ namespace LoanAPI.Services
 
             if (hasActiveSession)
             {
-                return (false, "This account is already logged in on another browser or device. Please log out from that session first.", null);
+                return (false, "This account is already logged in on another browser or device. P lease log out from that session first.", null);
             }
 
             var sessionId = Guid.NewGuid().ToString();
             user.SessionId = sessionId;
-            user.SessionExpiresAt = DateTime.UtcNow.AddMinutes(15); 
+            user.SessionExpiresAt = DateTime.UtcNow.AddMinutes(30); 
             await _userRepository.UpdateUser(user);
 
             var token = _tokenService.GenerateToken(user, sessionId);

@@ -13,7 +13,6 @@
             <th>Full Name</th>
             <th>Email</th>
             <th>Phone</th>
-            <th>CIBIL Score</th>
             <th></th>
         </tr>
     </thead>
@@ -25,7 +24,6 @@
                 <td>@c.FullName</td>
                 <td>@c.Email</td>
                 <td>@c.Phone</td>
-                <td>@c.CIBILScore</td>
                 <td>
                     <form asp-action="Delete" asp-route-id="@c.CustomerId" method="post"
                           onsubmit="return confirm('Delete this customer? This cannot be undone.');" style="display:inline">

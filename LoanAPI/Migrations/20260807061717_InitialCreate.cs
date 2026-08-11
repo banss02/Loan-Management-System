@@ -18,14 +18,20 @@ namespace LoanAPI.Migrations
                     CustomerId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     FullName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    DateOfBirth = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    DateOfBirth = table.Column<DateOnly>(type: "date", nullable: false),
                     Email = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Phone = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Salary = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    CIBILScore = table.Column<int>(type: "int", nullable: false),
                     EmploymentType = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    AssignedAdminId = table.Column<int>(type: "int", nullable: true)
+                    CompanyName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PANNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AadhaarNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    GuardianName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Address = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    BankName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AccountNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    IFSCCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -129,6 +135,24 @@ namespace LoanAPI.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "LoanTypeAssignments",
+                columns: table => new
+                {
+                    LoanType = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    UserId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LoanTypeAssignments", x => x.LoanType);
+                    table.ForeignKey(
+                        name: "FK_LoanTypeAssignments_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Payments",
                 columns: table => new
                 {
@@ -146,8 +170,7 @@ namespace LoanAPI.Migrations
                         name: "FK_Payments_LoanSchedules_ScheduleId",
                         column: x => x.ScheduleId,
                         principalTable: "LoanSchedules",
-                        principalColumn: "ScheduleId",
-                        onDelete: ReferentialAction.SetNull);
+                        principalColumn: "ScheduleId");
                     table.ForeignKey(
                         name: "FK_Payments_Loans_LoanId",
                         column: x => x.LoanId,
@@ -184,6 +207,11 @@ namespace LoanAPI.Migrations
                 column: "LoanId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_LoanTypeAssignments_UserId",
+                table: "LoanTypeAssignments",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Payments_LoanId",
                 table: "Payments",
                 column: "LoanId");
@@ -210,6 +238,9 @@ namespace LoanAPI.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Documents");
+
+            migrationBuilder.DropTable(
+                name: "LoanTypeAssignments");
 
             migrationBuilder.DropTable(
                 name: "Payments");

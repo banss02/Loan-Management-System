@@ -1,35 +1,108 @@
 @model LoanMVC.Models.CustomerViewModel
 
 @{
-    ViewData["Title"] = "My Profile";
+    ViewData["Title"] = "Customer Details";
 }
 
-<h2>My Profile</h2>
+<h2>Customer Profile</h2>
+@if (ViewBag.MissingFields != null &&
+    ((List<string>)ViewBag.MissingFields).Any())
+{
+    <div class="alert alert-warning">
+        <strong>⚠ Profile Incomplete</strong>
 
-<dl class="row">
-    <dt class="col-sm-3">Customer Id</dt>
-    <dd class="col-sm-9">@Model.CustomerId</dd>
+        <p>
+            Please complete the following details before applying for a loan:
+        </p>
 
-    <dt class="col-sm-3">Full Name</dt>
-    <dd class="col-sm-9">@Model.FullName</dd>
+        <ul>
+            @foreach (var field in (List<string>)ViewBag.MissingFields)
+            {
+                <li>@field</li>
+            }
+        </ul>
 
-    <dt class="col-sm-3">Email</dt>
-    <dd class="col-sm-9">@Model.Email</dd>
+        <a asp-action="Edit" class="btn btn-primary">
+            Complete Profile
+        </a>
+    </div>
+}
 
-    <dt class="col-sm-3">Phone</dt>
-    <dd class="col-sm-9">@Model.Phone</dd>
+<table class="table table-bordered">
+    <tr>
+        <th>Full Name</th>
+        <td>@Model.FullName</td>
+    </tr>
 
-    <dt class="col-sm-3">Salary</dt>
-    <dd class="col-sm-9">@Model.Salary</dd>
+    <tr>
+        <th>Date of Birth</th>
+        <td>@Model.DateOfBirth</td>
+    </tr>
 
-    <dt class="col-sm-3">CIBIL Score</dt>
-    <dd class="col-sm-9">@Model.CIBILScore</dd>
+    <tr>
+        <th>Email</th>
+        <td>@Model.Email</td>
+    </tr>
 
-    <dt class="col-sm-3">Employment Type</dt>
-    <dd class="col-sm-9">@Model.EmploymentType</dd>
+    <tr>
+        <th>Phone</th>
+        <td>@Model.Phone</td>
+    </tr>
 
-    <dt class="col-sm-3">Customer Since</dt>
-    <dd class="col-sm-9">@Model.CreatedDate.ToShortDateString()</dd>
-</dl>
+    <tr>
+        <th>Salary</th>
+        <td>@Model.Salary</td>
+    </tr>
+
+    <tr>
+        <th>Employment Type</th>
+        <td>@Model.EmploymentType</td>
+    </tr>
+
+    <tr>
+        <th>Company Name</th>
+        <td>@Model.CompanyName</td>
+    </tr>
+
+    <tr>
+        <th>PAN Number</th>
+        <td>@Model.PANNumber</td>
+    </tr>
+
+    <tr>
+        <th>Aadhaar Number</th>
+        <td>@Model.AadhaarNumber</td>
+    </tr>
+
+    <tr>
+        <th>Guardian Name</th>
+        <td>@Model.GuardianName</td>
+    </tr>
+
+    <tr>
+        <th>Address</th>
+        <td>@Model.Address</td>
+    </tr>
+
+    <tr>
+        <th>Bank Name</th>
+        <td>@Model.BankName</td>
+    </tr>
+
+    <tr>
+        <th>Account Number</th>
+        <td>@Model.AccountNumber</td>
+    </tr>
+
+    <tr>
+        <th>IFSC Code</th>
+        <td>@Model.IFSCCode</td>
+    </tr>
+
+    <tr>
+        <th>Created Date</th>
+        <td>@Model.CreatedDate</td>
+    </tr>
+</table>
 
 <a asp-action="Edit" class="btn btn-primary">Edit Profile</a>

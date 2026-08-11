@@ -6,8 +6,11 @@
 
 <h2>Customer Registration</h2>
 
-<form asp-action="Register" method="post">
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<form asp-action="Register"
+      method="post"
+      enctype="multipart/form-data"
+      id="registerForm">    
+      <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
     <div class="mb-3">
         <label asp-for="FullName" class="form-label"></label>
@@ -38,13 +41,7 @@
         <input asp-for="Salary" type="number" step="0.01" class="form-control" />
         <span asp-validation-for="Salary" class="text-danger"></span>
     </div>
-
-    <div class="mb-3">
-        <label asp-for="CIBILScore" class="form-label"></label>
-        <input asp-for="CIBILScore" type="number" class="form-control" />
-        <span asp-validation-for="CIBILScore" class="text-danger"></span>
-    </div>
-
+   
     <div class="mb-3">
         <label asp-for="EmploymentType" class="form-label"></label>
         <select asp-for="EmploymentType" class="form-select">
@@ -55,6 +52,7 @@
         </select>
         <span asp-validation-for="EmploymentType" class="text-danger"></span>
     </div>
+
 
     <div class="mb-3">
         <label asp-for="Username" class="form-label"></label>
@@ -68,9 +66,20 @@
         <span asp-validation-for="Password" class="text-danger"></span>
     </div>
 
+
+<div class="card mb-4" style="max-width:600px;">
+    <div class="card-body">
+        <h5>Upload Supporting Document (Optional)</h5>
+
+        <p class="text-muted">
+            Upload your Bank details document now. After registration, the information will
+            automatically appear on your Profile page where you can review and save it.
+        </p>
+
+        <input type="file"id="documentFile"name="documentFile"class="form-control"accept=".pdf,.txt" />
+    </div>
+</div>
+
     <button type="submit" class="btn btn-primary">Register</button>
 </form>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}

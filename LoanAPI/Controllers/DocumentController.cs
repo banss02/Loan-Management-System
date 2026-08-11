@@ -26,6 +26,7 @@ namespace LoanAPI.Controllers
             var docs = await _documentService.GetAll();
             var visibleIds = await _access.GetVisibleCustomerIds(User);
             var visible = docs.Where(d => visibleIds.Contains(d.CustomerId)).ToList();
+
             return Ok(visible);
         }
 
@@ -39,15 +40,16 @@ namespace LoanAPI.Controllers
             return Ok(docs);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Upload(IFormFile file)
+        // Used immediately after registration
+        [AllowAnonymous]
+        [HttpPost("upload/{customerId}")]
+        public async Task<IActionResult> Upload(int customerId, IFormFile file)
         {
-            var myCustomerId = AccessControlService.GetMyCustomerId(User);
-            if (myCustomerId == null && !AccessControlService.IsAdmin(User))
-                return Forbid();
+            if (file == null || file.Length == 0)
+                return BadRequest("Please select a file.");
 
-            var customerId = myCustomerId ?? 0;
             var result = await _documentService.Upload(customerId, file);
+
             return Ok(result);
         }
     }

@@ -20,12 +20,19 @@ namespace LoanMVC.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Register(RegisterCustomerViewModel model)
+        public async Task<IActionResult> Register(RegisterCustomerViewModel model, IFormFile? documentFile)
         {
             if (!ModelState.IsValid)
                 return View(model);
 
             var result = await _customerService.Register(model);
+
+            if(result.Success && documentFile != null)
+            {
+                await _customerService.UploadDocument(
+                    result.CustomerId,
+                     documentFile);
+            }
 
             if (!result.Success)
             {
@@ -37,19 +44,53 @@ namespace LoanMVC.Controllers
             return RedirectToAction("Login", "Account");
         }
 
+       
         [SessionAuth]
-        public async Task<IActionResult> Details()
-        {
-            var customerId = HttpContext.Session.GetInt32("CustomerId");
-            if (customerId == null)
-                return RedirectToAction("Login", "Account");
+public async Task<IActionResult> Details()
+{
+    var customerId = HttpContext.Session.GetInt32("CustomerId");
 
-            var customer = await _customerService.GetCustomerById(customerId.Value);
-            if (customer == null)
-                return NotFound();
+    if (customerId == null)
+        return RedirectToAction("Login", "Account");
 
-            return View(customer);
-        }
+    var customer = await _customerService.GetCustomerById(customerId.Value);
+
+    if (customer == null)
+        return NotFound();
+
+
+    var missingFields = new List<string>();
+
+    if (string.IsNullOrWhiteSpace(customer.CompanyName))
+        missingFields.Add("Company Name");
+
+    if (string.IsNullOrWhiteSpace(customer.PANNumber))
+        missingFields.Add("PAN Number");
+
+    if (string.IsNullOrWhiteSpace(customer.AadhaarNumber))
+        missingFields.Add("Aadhaar Number");
+
+    if (string.IsNullOrWhiteSpace(customer.GuardianName))
+        missingFields.Add("Guardian Name");
+
+    if (string.IsNullOrWhiteSpace(customer.Address))
+        missingFields.Add("Address");
+
+    if (string.IsNullOrWhiteSpace(customer.BankName))
+        missingFields.Add("Bank Name");
+
+    if (string.IsNullOrWhiteSpace(customer.AccountNumber))
+        missingFields.Add("Account Number");
+
+    if (string.IsNullOrWhiteSpace(customer.IFSCCode))
+        missingFields.Add("IFSC Code");
+
+
+    ViewBag.MissingFields = missingFields;
+
+
+    return View(customer);
+}
 
         [SessionAuth(Roles = "Admin")]
         public async Task<IActionResult> Index()
@@ -59,29 +100,64 @@ namespace LoanMVC.Controllers
         }
 
         [SessionAuth]
-        public async Task<IActionResult> Edit()
-        {
-            var customerId = HttpContext.Session.GetInt32("CustomerId");
-            if (customerId == null)
-                return RedirectToAction("Login", "Account");
+public async Task<IActionResult> Edit()
+{
+    var customerId = HttpContext.Session.GetInt32("CustomerId");
+    if (customerId == null)
+        return RedirectToAction("Login", "Account");
 
-            var customer = await _customerService.GetCustomerById(customerId.Value);
-            if (customer == null)
-                return NotFound();
+    var customer = await _customerService.GetCustomerById(customerId.Value);
+    if (customer == null)
+        return NotFound();
 
-            var model = new UpdateCustomerViewModel
-            {
-                CustomerId = customer.CustomerId,
-                FullName = customer.FullName,
-                Email = customer.Email,
-                Phone = customer.Phone,
-                Salary = customer.Salary,
-                CIBILScore = customer.CIBILScore,
-                EmploymentType = customer.EmploymentType
-            };
+    var model = new UpdateCustomerViewModel
+    {
+        CustomerId = customer.CustomerId,
+        FullName = customer.FullName,
+        Email = customer.Email,
+        Phone = customer.Phone,
+        Salary = customer.Salary,
+        EmploymentType = customer.EmploymentType,
+        CompanyName = customer.CompanyName,
+        Address = customer.Address,
+        GuardianName = customer.GuardianName,
+        PANNumber = customer.PANNumber,
+        AadhaarNumber = customer.AadhaarNumber,
+        BankName = customer.BankName,
+        AccountNumber = customer.AccountNumber,
+        IFSCCode = customer.IFSCCode
+    };
 
-            return View(model);
-        }
+    var missingFields = new List<string>();
+
+    if (string.IsNullOrWhiteSpace(model.CompanyName))
+        missingFields.Add("Company Name");
+
+    if (string.IsNullOrWhiteSpace(model.PANNumber))
+        missingFields.Add("PAN Number");
+
+    if (string.IsNullOrWhiteSpace(model.AadhaarNumber))
+        missingFields.Add("Aadhaar Number");
+
+    if (string.IsNullOrWhiteSpace(model.GuardianName))
+        missingFields.Add("Guardian Name");
+
+    if (string.IsNullOrWhiteSpace(model.Address))
+        missingFields.Add("Address");
+
+    if (string.IsNullOrWhiteSpace(model.BankName))
+        missingFields.Add("Bank Name");
+
+    if (string.IsNullOrWhiteSpace(model.AccountNumber))
+        missingFields.Add("Account Number");
+
+    if (string.IsNullOrWhiteSpace(model.IFSCCode))
+        missingFields.Add("IFSC Code");
+
+    ViewBag.MissingFields = missingFields;
+
+    return View(model);
+}
 
         [HttpPost]
         [SessionAuth]

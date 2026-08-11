@@ -46,7 +46,12 @@ namespace LoanMVC.Controllers
                 return View();
             }
 
-            var success = await _documentService.Upload(file);
+            var customerId = HttpContext.Session.GetInt32("CustomerId");
+
+            if (customerId == null)
+               return RedirectToAction("Login", "Account");
+
+            var success = await _documentService.Upload(customerId.Value, file);
             if (!success)
             {
                 ModelState.AddModelError("", "Upload failed.");

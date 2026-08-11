@@ -5,21 +5,18 @@ namespace LoanAPI.Helper
 {
     public class AccessControlService
     {
-        private readonly CustomerService _customerService;
+        private readonly LoanService _loanService;
 
-        public AccessControlService(CustomerService customerService)
+        public AccessControlService(LoanService loanService)
         {
-            _customerService = customerService;
+            _loanService = loanService;
         }
 
-        public static bool IsAdmin(ClaimsPrincipal user) =>
-            user.FindFirst(ClaimTypes.Role)?.Value == "Admin";
+        public static bool IsAdmin(ClaimsPrincipal user) =>user.FindFirst(ClaimTypes.Role)?.Value == "Admin";
 
-        public static int? GetMyCustomerId(ClaimsPrincipal user) =>
-            int.TryParse(user.FindFirst("CustomerId")?.Value, out var id) ? id : null;
+        public static int? GetMyCustomerId(ClaimsPrincipal user) =>int.TryParse(user.FindFirst("CustomerId")?.Value, out var id) ? id : null;
 
-        public static int? GetMyUserId(ClaimsPrincipal user) =>
-            int.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var id) ? id : null;
+        public static int? GetMyUserId(ClaimsPrincipal user) =>int.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var id) ? id : null;
 
         public async Task<bool> CanAccessCustomer(ClaimsPrincipal user, int customerId)
         {
@@ -30,7 +27,8 @@ namespace LoanAPI.Helper
             if (adminUserId == null)
                 return false;
 
-            return await _customerService.IsCustomerAssignedToAdmin(customerId, adminUserId.Value);
+            var visibleIds = await _loanService.GetCustomerIdsAssignedToAdmin(adminUserId.Value);
+            return visibleIds.Contains(customerId);
         }
 
         public async Task<List<int>> GetVisibleCustomerIds(ClaimsPrincipal user)
@@ -45,7 +43,7 @@ namespace LoanAPI.Helper
             if (adminUserId == null)
                 return new List<int>();
 
-            return await _customerService.GetCustomerIdsForAdmin(adminUserId.Value);
+            return await _loanService.GetCustomerIdsAssignedToAdmin(adminUserId.Value);
         }
     }
 }

@@ -33,5 +33,12 @@ namespace LoanAPI.Repositories
             _context.Loans.Update(loan);
             await _context.SaveChangesAsync();
         }
+
+        public async Task<List<int>> GetCustomerIdsByLoanTypes(List<string> loanTypes) =>
+            await _context.Loans
+                .Where(l => loanTypes.Contains(l.LoanType))
+                .Select(l => l.CustomerId)
+                .Distinct()
+                .ToListAsync();
     }
 }

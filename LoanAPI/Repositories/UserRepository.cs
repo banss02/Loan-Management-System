@@ -24,7 +24,13 @@ namespace LoanAPI.Repositories
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
         }
-
+         public async Task<int?> GetUserIdByCustomerId(int customerId)
+        {
+             return await _context.Users
+               .Where(u => u.CustomerId == customerId)
+               .Select(u => (int?)u.UserId)
+              .FirstOrDefaultAsync();
+       }
         public async Task UpdateUser(User user)
         {
             _context.Users.Update(user);

@@ -21,6 +21,7 @@ builder.Services.AddScoped<LoanRepository>();
 builder.Services.AddScoped<LoanScheduleRepository>();
 builder.Services.AddScoped<PaymentRepository>();
 builder.Services.AddScoped<DocumentRepository>();
+builder.Services.AddScoped<LoanTypeAssignmentRepository>();
 
 builder.Services.AddScoped<CustomerService>();
 builder.Services.AddScoped<UserService>();
@@ -30,6 +31,8 @@ builder.Services.AddScoped<PaymentService>();
 builder.Services.AddScoped<DocumentService>();
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<AccessControlService>();
+builder.Services.AddScoped<DocumentExtractionService>();
+builder.Services.AddScoped<EncryptionService>();
 
 var jwtKey = builder.Configuration["Jwt:Key"]!;
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -169,6 +172,27 @@ using (var scope = app.Services.CreateScope())
             CustomerId = null,
         });
     }
+    if (await userRepo.GetUserByUsername("admin4") == null)
+    {
+    await userRepo.AddUser(new User
+    {
+        Username = "Admin4",
+        PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin@4"),
+        Role = "Admin",
+        CustomerId = null
+    });}  
+    var admin1 = await userRepo.GetUserByUsername("Admin1");
+    var admin2 = await userRepo.GetUserByUsername("Admin2");
+    var admin3 = await userRepo.GetUserByUsername("Admin3");
+    var admin4 = await userRepo.GetUserByUsername("Admin4");
+
+    var assignmentRepo = scope.ServiceProvider.GetRequiredService<LoanTypeAssignmentRepository>();
+
+    await assignmentRepo.AddOrUpdate("Personal", admin1!.UserId);
+    await assignmentRepo.AddOrUpdate("Home", admin2!.UserId);
+    await assignmentRepo.AddOrUpdate("Car", admin3!.UserId);
+    await assignmentRepo.AddOrUpdate("Education", admin4!.UserId); 
 }
+
 
 app.Run();
