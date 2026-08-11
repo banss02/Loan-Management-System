@@ -6,7 +6,7 @@ obj/
 
 *.user
 *.suo
-
+appsettings.json
 appsettings.Development.json
 
 **/bin/
