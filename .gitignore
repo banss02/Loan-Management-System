@@ -1,0 +1,15 @@
+bin/
+obj/
+
+.vs/
+.vscode/
+
+*.user
+*.suo
+appsettings.json
+appsettings.Development.json
+
+Uploads/
+
+**/bin/
+**/obj/
