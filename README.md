@@ -47,7 +47,6 @@ flowchart LR
     C --> D[Entity Framework Core]
     D --> E[(SQL Server)]
 
-```
 
 ## Technology Stack
 
