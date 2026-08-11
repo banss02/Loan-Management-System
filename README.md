@@ -2,12 +2,10 @@
 
 A web-based Loan Management System built using **ASP.NET Core Web API** and **ASP.NET Core MVC**. The system manages the complete loan process from customer registration and eligibility checking to loan approval, EMI schedules, document verification, and payments.
 
----
 
 ## Features
 
 - Customer registration and profile management
-- Customer eligibility and CIBIL score validation
 - Loan application and loan type selection
 - Loan approval and rejection
 - Document upload and verification
@@ -20,7 +18,7 @@ A web-based Loan Management System built using **ASP.NET Core Web API** and **AS
 
 ## Loan Flow
 
-
+```text
 Customer Registration
         ↓
 Login
@@ -39,29 +37,17 @@ EMI Schedule
         ↓
 EMI Payment
 
+
 ## Architecture
 
+```mermaid
+flowchart LR
+    A[Customer] --> B[LoanMVC<br/>ASP.NET Core MVC]
+    B -->|HTTP / REST API| C[LoanAPI<br/>ASP.NET Core Web API]
+    C --> D[Entity Framework Core]
+    D --> E[(SQL Server)]
 
-┌───────────────┐
-│   LoanMVC     │
-│ ASP.NET MVC   │
-└───────┬───────┘
-        │ HTTP
-        ▼
-┌───────────────┐
-│   LoanAPI     │
-│ ASP.NET Core  │
-│     Web API   │
-└───────┬───────┘
-        │
-        ▼
-┌───────────────┐
-│  SQL Server   │
-│ Entity        │
-│ Framework     │
-└───────────────┘
-
-
+```
 
 ## Technology Stack
 
