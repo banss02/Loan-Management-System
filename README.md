@@ -39,12 +39,25 @@ EMI Payment
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    A[Customer] --> B[LoanMVC<br/>ASP.NET Core MVC]
-    B -->|HTTP / REST API| C[LoanAPI<br/>ASP.NET Core Web API]
-    C --> D[Entity Framework Core]
-    D --> E[(SQL Server)]
+```text
+┌───────────────┐
+│   LoanMVC     │
+│ ASP.NET MVC   │
+└───────┬───────┘
+        │ HTTP
+        ▼
+┌───────────────┐
+│   LoanAPI     │
+│ ASP.NET Core  │
+│    Web API    │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│  SQL Server   │
+│    Entity     │
+│   Framework   │
+└───────────────┘
 ```
 
 ## Technology Stack
